@@ -1,0 +1,28 @@
+{
+    "success": true,
+    "msg": "New post has been created successfuly.",
+    "images": [
+        {
+            "fieldname": "files",
+            "originalname": "Angular_full_color_logo.svg.png",
+            "encoding": "7bit",
+            "mimetype": "image/png",
+            "buffer": {
+                "type": "Buffer",
+                "data": []
+            },
+            "size": 83174
+        },
+        {
+            "fieldname": "files",
+            "originalname": "Saas expert, React js, Next js, Node js, Mongodb.png",
+            "encoding": "7bit",
+            "mimetype": "image/png",
+            "buffer": {
+                "type": "Buffer",
+                "data": []
+            },
+            "size": 517866
+        }
+    ]
+}
