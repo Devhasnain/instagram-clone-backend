@@ -19,9 +19,9 @@ route.post("/create/:id", async (req, res) => {
       throw new Error("Bad Request");
     }
 
-    if(!body?.text){
+    if (!body?.text) {
       throw new Error("Please write a comment.");
-    };
+    }
 
     let post = await Post.findById(id);
 
@@ -42,7 +42,7 @@ route.post("/create/:id", async (req, res) => {
     post.comments = [...post.comments, comment._id];
     await post.save();
 
-    let payload = {};
+    let payload = {commentID:comment._id};
     return ResHandler(payload, req, res);
   } catch (error) {
     return ErrorHandler(error, req, res);
@@ -88,7 +88,22 @@ route.put("/like/:id", async (req, res) => {
     if (!id) {
       throw new Error("Bad Request");
     }
-    await Comment.findByIdAndUpdate(id, { $addToSet: { likes: user._id } });
+
+    let comment = await Comment.findById(id);
+
+    let hasLiked = comment?.likes?.findIndex(
+      (item) => item.toString() === user?._id?.toString()
+    );
+
+    if (hasLiked !== -1) {
+      comment.likes.splice(hasLiked, 1);
+    }
+
+    if (hasLiked === -1) {
+      comment.likes.push(user._id);
+    }
+
+    await comment.save();
 
     return ResHandler({}, req, res);
   } catch (error) {

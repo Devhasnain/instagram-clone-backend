@@ -2,17 +2,15 @@ const { Router } = require("express");
 const { ErrorHandler, ResHandler } = require("../utliz/ResponseHandlers");
 const Post = require("../database/models/Post");
 const TokenValidator = require("../utliz/TokenValidator");
-const {
-  postFiles,
-  postReel,
-  postStory,
-} = require("../utliz/Cloudinary");
+const { postFiles, postReel, postStory } = require("../utliz/Cloudinary");
 const usersSchema = require("../database/models/User");
 const Story = require("../database/models/Story");
 const {
   populateComments,
   populateUser,
   populateLikes,
+  populatePostShares,
+  populateShares,
 } = require("../utliz/constants");
 const cloudinary = require("cloudinary").v2;
 const route = Router();
@@ -22,6 +20,25 @@ route.use(TokenValidator);
 route.get("/get/all", async (req, res) => {
   try {
     let posts = await Post.find()
+      .populate(populateComments)
+      .populate(populateUser)
+      .populate(populateLikes)
+      .populate(populateShares)
+      .lean()
+      .exec();
+    let payload = {
+      posts,
+    };
+    return ResHandler(payload, req, res);
+  } catch (error) {
+    return ErrorHandler(error, req, res);
+  }
+});
+
+route.get("/get/all/:userID", async (req, res) => {
+  try {
+    let { userID } = req.params;
+    let posts = await Post.find({ user: userID })
       .populate(populateComments)
       .populate(populateUser)
       .populate(populateLikes)
@@ -40,12 +57,28 @@ route.put("/like/:id", async (req, res) => {
   try {
     let { id } = req.params;
     let user = req.user;
+
     if (!id) {
       throw new Error("Bad Request");
     }
-    await Post.findByIdAndUpdate(id, {
-      $addToSet: { likes: user._id },
-    });
+
+    let post = await Post.findById(id);
+
+    if (!post) {
+      throw new Error("Bad Request");
+    }
+
+    let hasLiked = post?.likes?.findIndex((item) => item.toString() === user?._id?.toString());
+    
+    if (hasLiked !== -1) {
+      post.likes.splice(hasLiked, 1);
+    }
+    
+    if (hasLiked === -1) {
+      post.likes.push(user._id);
+    }
+
+    await post.save();
 
     return ResHandler({}, req, res);
   } catch (error) {
@@ -75,7 +108,7 @@ route.post("/create", postFiles, async (req, res) => {
     let body = req.body;
     let user = req.user;
     let images =
-      req.files.filter((item) => ({
+      req?.files?.filter((item) => ({
         path: item.path,
         filename: item.filename,
       })) ?? [];
@@ -84,7 +117,7 @@ route.post("/create", postFiles, async (req, res) => {
       throw new Error("Please select images to create a post.");
     }
 
-    let post = await Post.create({
+    let newPost = await Post.create({
       user: user._id,
       type: "post",
       images,
@@ -92,8 +125,16 @@ route.post("/create", postFiles, async (req, res) => {
     });
 
     await usersSchema.findByIdAndUpdate(user._id, {
-      $push: { posts: post._id },
+      $push: { posts: newPost._id },
     });
+
+    let post = await Post.findById(newPost._id)
+      .populate(populateComments)
+      .populate(populateUser)
+      .populate(populateLikes)
+      .lean()
+      .exec();
+
     let payload = {
       msg: "New post has been created successfuly.",
       post,
@@ -101,6 +142,7 @@ route.post("/create", postFiles, async (req, res) => {
 
     return ResHandler(payload, req, res);
   } catch (error) {
+    console.log(error);
     return ErrorHandler(error, req, res);
   }
 });

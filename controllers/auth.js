@@ -11,6 +11,8 @@ const {
   userPostsPopulation,
   userPostLikePopulation,
   userStoryPopulation,
+  populateUser,
+  populatePostUser,
 } = require("../utliz/constants");
 require("dotenv").config();
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -135,6 +137,7 @@ route.get("/refresh", async (req, res) => {
       .populate(userPostLikePopulation)
       .populate(userPostsPopulation)
       .populate(userStoryPopulation)
+      .populate(populatePostUser)
       .lean()
       .exec();
 
@@ -144,6 +147,7 @@ route.get("/refresh", async (req, res) => {
 
     return ResHandler(payload, req, res);
   } catch (error) {
+    console.log(error)
     return ErrorHandler(error, req, res);
   }
 });

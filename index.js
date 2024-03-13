@@ -14,14 +14,15 @@ app.use(cors({ origin: "*" }));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.get("/test", (req,res) => {
+app.get("/test", (req, res) => {
   return res.send({ msg: "hasnain" });
 });
 
 app.use("/", routes);
 
 server.listen(3000);
-server.on("listening", () => {
+
+server.on("listening", async () => {
   try {
     console.log("server is up...");
     dbConnection();

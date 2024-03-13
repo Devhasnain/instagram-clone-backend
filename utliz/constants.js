@@ -78,11 +78,34 @@ const populateUser = {
   select: "_id username name image",
 };
 
+const populateShares = {
+  path: "shares",
+  select: "_id username name image",
+};
+
 const populateComments = {
   path: "comments",
   select: "_id user text replies likes createdAt",
   populate: [populateUser, populateLikes, populateReplies],
 };
+
+const populatePostUser = {
+  path: "posts",
+  populate:[populateUser]
+}
+const populatePostShares = {
+  path: "posts",
+  populate:[populateShares]
+}
+
+const extractInfo= [
+  "-password",
+  "-email",
+  "-ip",
+  "-devices",
+  "-user_agent",
+  "-number"
+];
 
 module.exports = {
   userPostsPopulation,
@@ -90,5 +113,9 @@ module.exports = {
   userStoryPopulation,
   populateComments,
   populateLikes,
-  populateUser
+  populateUser,
+  extractInfo,
+  populatePostUser,
+  populatePostShares,
+  populateShares
 };
